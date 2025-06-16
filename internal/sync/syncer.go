@@ -178,7 +178,7 @@ func (s *APIMTenantSynchroniser) Exec(request Request) error {
 			}
 
 			log.Info().Msgf("📢 Begin processing for APIProxy %v", artifactId)
-			proxyExists, err := proxy.Get(artifactId)
+			proxyExists, err := proxy.Exists(artifactId)
 			if err != nil {
 				return err
 			}

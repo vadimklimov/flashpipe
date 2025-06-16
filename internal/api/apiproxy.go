@@ -124,7 +124,7 @@ func (a *APIProxy) Upload(sourceDir string, workDir string) error {
 	return nil
 }
 
-func (a *APIProxy) Get(id string) (bool, error) {
+func (a *APIProxy) Exists(id string) (bool, error) {
 	log.Info().Msgf("Getting details of APIProxy %v", id)
 	urlPath := fmt.Sprintf("/apiportal/api/1.0/Management.svc/APIProxies('%v')", id)
 

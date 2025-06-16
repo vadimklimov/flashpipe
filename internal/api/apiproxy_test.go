@@ -1,14 +1,15 @@
 package api
 
 import (
+	"os"
+	"testing"
+
 	"github.com/engswee/flashpipe/internal/file"
 	"github.com/engswee/flashpipe/internal/httpclnt"
 	"github.com/engswee/flashpipe/internal/logger"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"os"
-	"testing"
 )
 
 type APIProxySuite struct {
@@ -69,7 +70,7 @@ func (suite *APIProxySuite) TestAPIProxy_Upload() {
 	if err != nil {
 		suite.T().Fatalf("Upload APIProxy failed with error - %v", err)
 	}
-	proxyExists, err := a.Get("Northwind_V4")
+	proxyExists, err := a.Exists("Northwind_V4")
 	if err != nil {
 		suite.T().Fatalf("Get APIProxy failed with error %v", err)
 	}
@@ -96,7 +97,7 @@ func (suite *APIProxySuite) TestAPIProxy_Download() {
 func tearDownAPIProxy(t *testing.T, id string, exe *httpclnt.HTTPExecuter) {
 	a := NewAPIProxy(exe)
 
-	proxyExists, err := a.Get("Northwind_V4")
+	proxyExists, err := a.Exists("Northwind_V4")
 	if err != nil {
 		t.Logf("WARNING - Exists failed with error - %v", err)
 	}

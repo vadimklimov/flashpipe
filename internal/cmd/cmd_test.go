@@ -2,13 +2,14 @@ package cmd
 
 import (
 	"bytes"
+	"os"
+	"strings"
+	"testing"
+
 	"github.com/engswee/flashpipe/internal/api"
 	"github.com/engswee/flashpipe/internal/file"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"strings"
-	"testing"
 )
 
 func TestCPICommands(t *testing.T) {
@@ -336,7 +337,7 @@ func TestAPIMCommands(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sync apim tenant failed with error %v", err)
 	}
-	proxyExists, err := a.Get("Northwind_V4")
+	proxyExists, err := a.Exists("Northwind_V4")
 	if err != nil {
 		t.Fatalf("Get APIProxy failed with error %v", err)
 	}
