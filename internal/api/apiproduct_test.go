@@ -67,7 +67,7 @@ func (suite *APIProductSuite) TearDownSuite() {
 	println("========== Tearing down suite - end ==========")
 }
 
-func (suite *APIProductSuite) TestAPIProduct_A_Upload() {
+func (suite *APIProductSuite) TestAPIProduct_1_Upload() {
 	a := NewAPIProduct(suite.exe)
 
 	err := a.Upload("../../test/testdata/apim/APIProducts/Northwind.json", "../../output/apim/work/upload")
@@ -87,7 +87,7 @@ func (suite *APIProductSuite) TestAPIProduct_A_Upload() {
 	assert.GreaterOrEqual(suite.T(), len(proxies), 1, "Expected number of APIProducts >= 1")
 }
 
-func (suite *APIProductSuite) TestAPIProduct_B_Download() {
+func (suite *APIProductSuite) TestAPIProduct_2_Download() {
 	a := NewAPIProduct(suite.exe)
 
 	err := a.Download("Northwind", "../../output/apim/product/work/download")

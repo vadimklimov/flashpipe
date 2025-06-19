@@ -213,6 +213,8 @@ func (a *APIProduct) Upload(sourceFile string, workDir string) error {
 
 	r := NewAPIResource(a.exe)
 
+	resourcesCache := make(map[string][]*APIResourceMetadata)
+
 	// Check if the API resource IDs exist, if not, retrieve the latest Ids
 	for i, resource := range createData.ApiResources {
 		log.Debug().Msgf("APIResource %d: ApiName=%s, Name=%s, Id=%s", i, resource.ApiProxyEndPoint.ApiName, resource.Name, resource.Id)
@@ -221,16 +223,22 @@ func (a *APIProduct) Upload(sourceFile string, workDir string) error {
 			return err
 		}
 		if !resourceExists {
-			log.Debug().Msgf("APIResource with Id %s does not exist. Trying to retrieve the latest Id", resource.Id)
+			log.Warn().Msgf("APIResource with Id %s does not exist. Trying to retrieve the latest Id", resource.Id)
 			// Retrieve the ID and update the value of resource.Id
-			resourceDetails, err := r.GetByName(resource.Name, resource.ApiProxyEndPoint.ApiName)
-			if err != nil {
-				return err
+			// Store the results in a cache to avoid multiple calls for the same API name
+			var resourceDetails []*APIResourceMetadata
+			resourceDetails, found := resourcesCache[resource.ApiProxyEndPoint.ApiName]
+			if !found {
+				resourceDetails, err = r.GetByName(resource.ApiProxyEndPoint.ApiName)
+				if err != nil {
+					return err
+				}
+				resourcesCache[resource.ApiProxyEndPoint.ApiName] = resourceDetails // Cache the result
 			}
 			// Loop through the resourceDetails and find the one with the matching name and apiName
 			for _, detail := range resourceDetails {
 				if detail.Name == resource.Name && detail.APIName == resource.ApiProxyEndPoint.ApiName {
-					log.Debug().Msgf("Replacing Id %s with %s", resource.Id, detail.Id)
+					log.Info().Msgf("Replacing Id %s with %s", resource.Id, detail.Id)
 					createData.ApiResources[i].Id = detail.Id // Update the Id in createData
 					break
 				}
@@ -281,7 +289,6 @@ func (a *APIProduct) List() ([]*APIProductMetadata, error) {
 	}
 	err = json.Unmarshal(respBody, &jsonData)
 	if err != nil {
-		log.Warn().Msgf("⚠️ Please check that hostname and credentials for APIM are correct - do not use CPI values!")
 		log.Error().Msgf("Error unmarshalling response as JSON. Response body = %s", respBody)
 		return nil, errors.Wrap(err, 0)
 	}
@@ -319,8 +326,8 @@ func (a *APIResource) Exists(id string) (bool, error) {
 	return true, nil
 }
 
-func (a *APIResource) GetByName(name string, apiName string) ([]*APIResourceMetadata, error) {
-	log.Info().Msgf("Getting list of APIResources")
+func (a *APIResource) GetByName(apiName string) ([]*APIResourceMetadata, error) {
+	log.Info().Msgf("Getting list of APIResources for %v", apiName)
 	urlPath := fmt.Sprintf("/apiportal/api/1.0/Management.svc/APIResources?$expand=apiProxyEndPoint&$filter=apiProxyEndPoint/FK_API_NAME%veq%v'%v'", "%20", "%20", apiName)
 
 	resp, err := readOnlyCall(urlPath, "List APIResources", a.exe)
