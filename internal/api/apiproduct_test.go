@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -12,14 +13,14 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type APIProxySuite struct {
+type APIProductSuite struct {
 	suite.Suite
 	serviceDetails *ServiceDetails
 	exe            *httpclnt.HTTPExecuter
 }
 
-func TestAPIProxyOauth(t *testing.T) {
-	suite.Run(t, &APIProxySuite{
+func TestAPIProductOauth(t *testing.T) {
+	suite.Run(t, &APIProductSuite{
 		serviceDetails: &ServiceDetails{
 			Host:              os.Getenv("FLASHPIPE_APIPORTAL_HOST"),
 			OauthHost:         os.Getenv("FLASHPIPE_OAUTH_HOST"),
@@ -30,7 +31,7 @@ func TestAPIProxyOauth(t *testing.T) {
 	})
 }
 
-func (suite *APIProxySuite) SetupSuite() {
+func (suite *APIProductSuite) SetupSuite() {
 	println("========== Setting up suite - start ==========")
 	suite.exe = InitHTTPExecuter(suite.serviceDetails)
 
@@ -39,22 +40,25 @@ func (suite *APIProxySuite) SetupSuite() {
 	viper.AutomaticEnv()
 	logger.InitConsoleLogger(viper.GetBool("debug"))
 
+	setupAPIProxy(suite.T(), "Northwind_V4", suite.exe)
+
 	println("========== Setting up suite - end ==========")
 }
 
-func (suite *APIProxySuite) SetupTest() {
+func (suite *APIProductSuite) SetupTest() {
 	println("---------- Setting up test - start ----------")
 	println("---------- Setting up test - end ----------")
 }
 
-func (suite *APIProxySuite) TearDownTest() {
+func (suite *APIProductSuite) TearDownTest() {
 	println("---------- Tearing down test - start ----------")
 	println("---------- Tearing down test - end ----------")
 }
 
-func (suite *APIProxySuite) TearDownSuite() {
+func (suite *APIProductSuite) TearDownSuite() {
 	println("========== Tearing down suite - start ==========")
 
+	tearDownAPIProduct(suite.T(), "Northwind", suite.exe)
 	tearDownAPIProxy(suite.T(), "Northwind_V4", suite.exe)
 	err := os.RemoveAll("../../output/apim")
 	if err != nil {
@@ -63,45 +67,60 @@ func (suite *APIProxySuite) TearDownSuite() {
 	println("========== Tearing down suite - end ==========")
 }
 
-func (suite *APIProxySuite) TestAPIProxy_Upload() {
-	a := NewAPIProxy(suite.exe)
+func (suite *APIProductSuite) TestAPIProduct_A_Upload() {
+	a := NewAPIProduct(suite.exe)
 
-	err := a.Upload("../../test/testdata/apim/Northwind_V4", "../../output/apim/work/upload")
+	err := a.Upload("../../test/testdata/apim/APIProducts/Northwind.json", "../../output/apim/work/upload")
 	if err != nil {
-		suite.T().Fatalf("Upload APIProxy failed with error - %v", err)
+		suite.T().Fatalf("Upload APIProduct failed with error - %v", err)
 	}
-	proxyExists, err := a.Exists("Northwind_V4")
+	productExists, err := a.Exists("Northwind")
 	if err != nil {
-		suite.T().Fatalf("Get APIProxy failed with error %v", err)
+		suite.T().Fatalf("Get APIProduct failed with error %v", err)
 	}
-	assert.True(suite.T(), proxyExists, "APIProxy was not uploaded")
+	assert.True(suite.T(), productExists, "APIProduct was not uploaded")
 
 	proxies, err := a.List()
 	if err != nil {
-		suite.T().Fatalf("List APIProxies failed with error - %v", err)
+		suite.T().Fatalf("List APIProducts failed with error - %v", err)
 	}
-	assert.GreaterOrEqual(suite.T(), len(proxies), 1, "Expected number of APIProxies >= 1")
+	assert.GreaterOrEqual(suite.T(), len(proxies), 1, "Expected number of APIProducts >= 1")
 }
 
-func (suite *APIProxySuite) TestAPIProxy_Download() {
-	a := NewAPIProxy(suite.exe)
+func (suite *APIProductSuite) TestAPIProduct_B_Download() {
+	a := NewAPIProduct(suite.exe)
 
-	err := a.Download("HelloWorldAPI", "../../output/apim/work/download")
+	err := a.Download("Northwind", "../../output/apim/product/work/download")
 	if err != nil {
-		suite.T().Fatalf("Download APIProxy failed with error - %v", err)
+		suite.T().Fatalf("Download APIProduct failed with error - %v", err)
 	}
 
-	assert.True(suite.T(), file.Exists("../../output/apim/work/download/HelloWorldAPI"), "APIProxy was not downloaded")
+	assert.True(suite.T(), file.Exists("../../output/apim/product/work/download/Northwind.json"), "APIProduct was not downloaded")
 }
 
-func tearDownAPIProxy(t *testing.T, id string, exe *httpclnt.HTTPExecuter) {
+func setupAPIProxy(t *testing.T, id string, exe *httpclnt.HTTPExecuter) {
 	a := NewAPIProxy(exe)
 
 	proxyExists, err := a.Exists(id)
 	if err != nil {
 		t.Logf("WARNING - Exists failed with error - %v", err)
 	}
-	if proxyExists {
+	if !proxyExists {
+		err := a.Upload(fmt.Sprintf("../../test/testdata/apim/%v", id), "../../output/apim/work/upload")
+		if err != nil {
+			t.Fatalf("Upload APIProxy failed with error - %v", err)
+		}
+	}
+}
+
+func tearDownAPIProduct(t *testing.T, id string, exe *httpclnt.HTTPExecuter) {
+	a := NewAPIProduct(exe)
+
+	productExists, err := a.Exists(id)
+	if err != nil {
+		t.Logf("WARNING - Exists failed with error - %v", err)
+	}
+	if productExists {
 		err = a.Delete(id)
 		if err != nil {
 			t.Logf("WARNING - Delete failed with error - %v", err)
