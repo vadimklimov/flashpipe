@@ -4,16 +4,17 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"net/url"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/elliotchance/orderedmap/v2"
 	"github.com/engswee/flashpipe/internal/config"
 	"github.com/engswee/flashpipe/internal/httpclnt"
 	"github.com/engswee/flashpipe/internal/logger"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"net/url"
-	"os"
-	"strings"
-	"time"
 )
 
 var Host string
@@ -159,7 +160,7 @@ func constructQueryParameters(cmd *cobra.Command, cmdErr error, analyticsSiteId 
 		syncPackageLevelDetails := config.GetBool(cmd, "sync-package-details")
 		params.Set("dimension17", fmt.Sprintf("%v", syncPackageLevelDetails))
 
-	case "apim":
+	case "apiproxy":
 		// 12 - Sync Direction
 		target := config.GetString(cmd, "target")
 		params.Set("dimension12", target)

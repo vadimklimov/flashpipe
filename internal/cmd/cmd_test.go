@@ -301,41 +301,41 @@ func TestAPIMCommands(t *testing.T) {
 
 	rootCmd := NewCmdRoot()
 	syncCmd := NewSyncCommand()
-	syncCmd.AddCommand(NewAPIMCommand())
+	syncCmd.AddCommand(NewAPIProxyCommand())
 	rootCmd.AddCommand(syncCmd)
 
 	var args []string
-	// 1 - Sync APIM to Git
-	args = append(args, "sync", "apim")
+	// 1 - Sync API Proxy to Git
+	args = append(args, "sync", "apiproxy")
 	args = append(args, "--tmn-host", os.Getenv("FLASHPIPE_APIPORTAL_HOST"))
 	args = append(args, "--oauth-clientid", os.Getenv("FLASHPIPE_APIPORTAL_OAUTH_CLIENTID"))
 	args = append(args, "--oauth-clientsecret", os.Getenv("FLASHPIPE_APIPORTAL_OAUTH_CLIENTSECRET"))
 	args = append(args, "--dir-git-repo", "../../")
-	args = append(args, "--dir-artifacts", "../../output/apim/artifact")
-	args = append(args, "--dir-work", "../../output/apim/git/work")
+	args = append(args, "--dir-artifacts", "../../output/apiproxy/artifact")
+	args = append(args, "--dir-work", "../../output/apiproxy/git/work")
 	args = append(args, "--ids-include", "HelloWorldAPI")
 	args = append(args, "--git-skip-commit")
 
 	_, _, err := ExecuteCommandC(rootCmd, args...)
 	if err != nil {
-		t.Fatalf("sync apim git failed with error %v", err)
+		t.Fatalf("sync apiproxy git failed with error %v", err)
 	}
-	assert.True(t, file.Exists("../../output/apim/artifact/HelloWorldAPI/manifest.json"), "manifest.json does not exist")
+	assert.True(t, file.Exists("../../output/apiproxy/artifact/HelloWorldAPI/manifest.json"), "manifest.json does not exist")
 
-	// 2 - Sync APIM to tenant
+	// 2 - Sync API Proxy to tenant
 	args = nil
-	args = append(args, "sync", "apim")
+	args = append(args, "sync", "apiproxy")
 	args = append(args, "--tmn-host", os.Getenv("FLASHPIPE_APIPORTAL_HOST"))
 	args = append(args, "--oauth-clientid", os.Getenv("FLASHPIPE_APIPORTAL_OAUTH_CLIENTID"))
 	args = append(args, "--oauth-clientsecret", os.Getenv("FLASHPIPE_APIPORTAL_OAUTH_CLIENTSECRET"))
-	args = append(args, "--dir-artifacts", "../../test/testdata/apim")
-	args = append(args, "--dir-work", "../../output/apim/tenant/work")
+	args = append(args, "--dir-artifacts", "../../test/testdata/apiproxy")
+	args = append(args, "--dir-work", "../../output/apiproxy/tenant/work")
 	args = append(args, "--ids-include", "Northwind_V4")
 	args = append(args, "--target", "tenant")
 
 	_, _, err = ExecuteCommandC(rootCmd, args...)
 	if err != nil {
-		t.Fatalf("sync apim tenant failed with error %v", err)
+		t.Fatalf("sync apiproxy tenant failed with error %v", err)
 	}
 	proxyExists, err := a.Exists("Northwind_V4")
 	if err != nil {
@@ -349,7 +349,7 @@ func TestAPIMCommands(t *testing.T) {
 	if err != nil {
 		t.Logf("WARNING - Delete failed with error - %v", err)
 	}
-	err = os.RemoveAll("../../output/apim")
+	err = os.RemoveAll("../../output/apiproxy")
 	if err != nil {
 		t.Logf("WARNING - Directory removal failed with error - %v", err)
 	}

@@ -56,7 +56,7 @@ func (suite *APIProxySuite) TearDownSuite() {
 	println("========== Tearing down suite - start ==========")
 
 	tearDownAPIProxy(suite.T(), "Northwind_V4", suite.exe)
-	err := os.RemoveAll("../../output/apim")
+	err := os.RemoveAll("../../output/apiproxy")
 	if err != nil {
 		suite.T().Logf("WARNING - Directory removal failed with error - %v", err)
 	}
@@ -66,7 +66,7 @@ func (suite *APIProxySuite) TearDownSuite() {
 func (suite *APIProxySuite) TestAPIProxy_Upload() {
 	a := NewAPIProxy(suite.exe)
 
-	err := a.Upload("../../test/testdata/apim/Northwind_V4", "../../output/apim/work/upload")
+	err := a.Upload("../../test/testdata/apiproxy/Northwind_V4", "../../output/apiproxy/work/upload")
 	if err != nil {
 		suite.T().Fatalf("Upload APIProxy failed with error - %v", err)
 	}
@@ -86,12 +86,12 @@ func (suite *APIProxySuite) TestAPIProxy_Upload() {
 func (suite *APIProxySuite) TestAPIProxy_Download() {
 	a := NewAPIProxy(suite.exe)
 
-	err := a.Download("HelloWorldAPI", "../../output/apim/work/download")
+	err := a.Download("HelloWorldAPI", "../../output/apiproxy/work/download")
 	if err != nil {
 		suite.T().Fatalf("Download APIProxy failed with error - %v", err)
 	}
 
-	assert.True(suite.T(), file.Exists("../../output/apim/work/download/HelloWorldAPI"), "APIProxy was not downloaded")
+	assert.True(suite.T(), file.Exists("../../output/apiproxy/work/download/HelloWorldAPI"), "APIProxy was not downloaded")
 }
 
 func tearDownAPIProxy(t *testing.T, id string, exe *httpclnt.HTTPExecuter) {

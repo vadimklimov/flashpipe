@@ -27,12 +27,12 @@ type Request struct {
 
 func NewSyncer(target string, functionType string, exe *httpclnt.HTTPExecuter) Syncer {
 	switch functionType {
-	case "APIM":
+	case "APIProxy":
 		switch target {
 		case "git":
-			return NewAPIMGitSynchroniser(exe)
+			return NewAPIProxyGitSynchroniser(exe)
 		case "tenant":
-			return NewAPIMTenantSynchroniser(exe)
+			return NewAPIProxyTenantSynchroniser(exe)
 		default:
 			return nil
 		}
@@ -51,19 +51,19 @@ func NewSyncer(target string, functionType string, exe *httpclnt.HTTPExecuter) S
 	}
 }
 
-type APIMGitSynchroniser struct {
+type APIProxyGitSynchroniser struct {
 	exe *httpclnt.HTTPExecuter
 }
 
-// NewAPIMGitSynchroniser returns an initialised APIMGitSynchroniser instance.
-func NewAPIMGitSynchroniser(exe *httpclnt.HTTPExecuter) Syncer {
-	s := new(APIMGitSynchroniser)
+// NewAPIProxyGitSynchroniser returns an initialised APIProxyGitSynchroniser instance.
+func NewAPIProxyGitSynchroniser(exe *httpclnt.HTTPExecuter) Syncer {
+	s := new(APIProxyGitSynchroniser)
 	s.exe = exe
 	return s
 }
 
-func (s *APIMGitSynchroniser) Exec(request Request) error {
-	log.Info().Msg("Sync APIM content to Git")
+func (s *APIProxyGitSynchroniser) Exec(request Request) error {
+	log.Info().Msg("Sync API Proxy content to Git")
 
 	proxy := api.NewAPIProxy(s.exe)
 	// Get all APIProxies
@@ -128,18 +128,18 @@ func (s *APIMGitSynchroniser) Exec(request Request) error {
 	return nil
 }
 
-type APIMTenantSynchroniser struct {
+type APIProxyTenantSynchroniser struct {
 	exe *httpclnt.HTTPExecuter
 }
 
-// NewAPIMTenantSynchroniser returns an initialised APIMTenantSynchroniser instance.
-func NewAPIMTenantSynchroniser(exe *httpclnt.HTTPExecuter) Syncer {
-	s := new(APIMTenantSynchroniser)
+// NewAPIProxyTenantSynchroniser returns an initialised APIProxyTenantSynchroniser instance.
+func NewAPIProxyTenantSynchroniser(exe *httpclnt.HTTPExecuter) Syncer {
+	s := new(APIProxyTenantSynchroniser)
 	s.exe = exe
 	return s
 }
 
-func (s *APIMTenantSynchroniser) Exec(request Request) error {
+func (s *APIProxyTenantSynchroniser) Exec(request Request) error {
 	// Get directory list
 	baseSourceDir := filepath.Clean(request.ArtifactsDir)
 	entries, err := os.ReadDir(baseSourceDir)

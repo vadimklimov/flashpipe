@@ -18,11 +18,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewAPIMCommand() *cobra.Command {
-	apimCmd := &cobra.Command{
-		Use:   "apim",
-		Short: "Sync API Management artifacts between tenant and Git",
-		Long: `Synchronise API Management artifacts between SAP Integration Suite
+func NewAPIProxyCommand() *cobra.Command {
+	apiproxyCmd := &cobra.Command{
+		Use:     "apiproxy",
+		Aliases: []string{"apim"},
+		Short:   "Sync API Management proxies (with dependent artifacts) between tenant and Git",
+		Long: `Synchronise API Management proxies (with dependent artifacts) between SAP Integration Suite
 tenant and a Git repository.`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// If artifacts directory is provided, validate that is it a subdirectory of Git repo
@@ -51,20 +52,19 @@ tenant and a Git repository.`,
 		},
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			startTime := time.Now()
-			if err = runSyncAPIM(cmd); err != nil {
+			if err = runSyncAPIProxy(cmd); err != nil {
 				cmd.SilenceUsage = true
 			}
 			analytics.Log(cmd, err, startTime)
 			return
 		},
 	}
-	// Define cobra flags, the default value has the lowest (least significant) precedence
 
-	return apimCmd
+	return apiproxyCmd
 }
 
-func runSyncAPIM(cmd *cobra.Command) error {
-	log.Info().Msg("Executing sync apim command")
+func runSyncAPIProxy(cmd *cobra.Command) error {
+	log.Info().Msg("Executing sync apiproxy command")
 
 	gitRepoDir, err := config.GetStringWithEnvExpand(cmd, "dir-git-repo")
 	if err != nil {
@@ -90,9 +90,9 @@ func runSyncAPIM(cmd *cobra.Command) error {
 	// Initialise HTTP executer
 	exe := api.InitHTTPExecuter(serviceDetails)
 
-	syncer := sync.NewSyncer(target, "APIM", exe)
-	apimWorkDir := fmt.Sprintf("%v/apim", workDir)
-	err = syncer.Exec(sync.Request{WorkDir: apimWorkDir, ArtifactsDir: artifactsDir, IncludedIds: includedIds, ExcludedIds: excludedIds})
+	syncer := sync.NewSyncer(target, "APIProxy", exe)
+	apiproxyWorkDir := fmt.Sprintf("%v/apiproxy", workDir)
+	err = syncer.Exec(sync.Request{WorkDir: apiproxyWorkDir, ArtifactsDir: artifactsDir, IncludedIds: includedIds, ExcludedIds: excludedIds})
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func runSyncAPIM(cmd *cobra.Command) error {
 		}
 	}
 	// Clean up working directory
-	err = os.RemoveAll(apimWorkDir)
+	err = os.RemoveAll(apiproxyWorkDir)
 	if err != nil {
 		return errors.Wrap(err, 0)
 	}
