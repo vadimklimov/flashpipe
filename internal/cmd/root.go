@@ -64,6 +64,7 @@ func Execute() {
 	rootCmd.AddCommand(NewDeployCommand())
 	syncCmd := NewSyncCommand()
 	syncCmd.AddCommand(NewAPIProxyCommand())
+	syncCmd.AddCommand(NewAPIProductCommand())
 	rootCmd.AddCommand(syncCmd)
 	updateCmd := NewUpdateCommand()
 	updateCmd.AddCommand(NewArtifactCommand())

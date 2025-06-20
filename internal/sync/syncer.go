@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/engswee/flashpipe/internal/api"
 	"github.com/engswee/flashpipe/internal/file"
@@ -33,6 +34,15 @@ func NewSyncer(target string, functionType string, exe *httpclnt.HTTPExecuter) S
 			return NewAPIProxyGitSynchroniser(exe)
 		case "tenant":
 			return NewAPIProxyTenantSynchroniser(exe)
+		default:
+			return nil
+		}
+	case "APIProduct":
+		switch target {
+		case "git":
+			return NewAPIProductGitSynchroniser(exe)
+		case "tenant":
+			return NewAPIProductTenantSynchroniser(exe)
 		default:
 			return nil
 		}
@@ -271,5 +281,160 @@ func (s *CPIPackageTenantSynchroniser) Exec(request Request) error {
 		}
 		log.Info().Msgf("Package %v updated", packageId)
 	}
+	return nil
+}
+
+type APIProductGitSynchroniser struct {
+	exe *httpclnt.HTTPExecuter
+}
+
+// NewAPIProductGitSynchroniser returns an initialised APIProductGitSynchroniser instance.
+func NewAPIProductGitSynchroniser(exe *httpclnt.HTTPExecuter) Syncer {
+	s := new(APIProductGitSynchroniser)
+	s.exe = exe
+	return s
+}
+
+func (s *APIProductGitSynchroniser) Exec(request Request) error {
+	log.Info().Msg("Sync API Product content to Git")
+
+	product := api.NewAPIProduct(s.exe)
+	// Get all APIProducts
+	artifacts, err := product.List()
+	if err != nil {
+		return err
+	}
+
+	// Create temp directories in working dir
+	targetRootDir := fmt.Sprintf("%v/download", request.WorkDir)
+	err = os.MkdirAll(targetRootDir, os.ModePerm)
+	if err != nil {
+		return errors.Wrap(err, 0)
+	}
+
+	// Process through the artifacts
+	for _, artifact := range artifacts {
+		log.Info().Msg("---------------------------------------------------------------------------------")
+		log.Info().Msgf("📢 Begin processing for APIProduct %v", artifact.Name)
+
+		// Filter in/out artifacts
+		if str.FilterIDs(artifact.Name, request.IncludedIds, request.ExcludedIds) {
+			continue
+		}
+
+		// Download artifact content
+		err = product.Download(artifact.Name, targetRootDir)
+		if err != nil {
+			return err
+		}
+
+		// Compare content and update Git if required
+		gitArtifactPath := fmt.Sprintf("%v/%v.json", request.ArtifactsDir, artifact.Name)
+		downloadedArtifactPath := fmt.Sprintf("%v/%v.json", targetRootDir, artifact.Name)
+		if file.Exists(gitArtifactPath) {
+			// (1) If artifact already exists in Git, then compare and update
+			log.Info().Msg("Comparing content from tenant against Git")
+			fileDiffer := file.DiffFile(downloadedArtifactPath, gitArtifactPath)
+
+			if fileDiffer {
+				log.Info().Msg("🏆 Changes detected and will be updated to Git")
+				// Update the changes into the Git
+				err := file.CopyFile(downloadedArtifactPath, gitArtifactPath)
+				if err != nil {
+					return err
+				}
+			} else {
+				log.Info().Msg("🏆 No changes detected. Update to Git not required")
+			}
+		} else { // (2) If artifact does not exist in Git, then add it
+			log.Info().Msgf("🏆 APIProduct %v does not exist, and will be added to Git", artifact.Name)
+			err = file.CopyFile(downloadedArtifactPath, gitArtifactPath)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	log.Info().Msg("---------------------------------------------------------------------------------")
+	log.Info().Msgf("🏆 Completed processing of APIProducts")
+
+	return nil
+}
+
+type APIProductTenantSynchroniser struct {
+	exe *httpclnt.HTTPExecuter
+}
+
+// NewAPIProductTenantSynchroniser returns an initialised APIProductTenantSynchroniser instance.
+func NewAPIProductTenantSynchroniser(exe *httpclnt.HTTPExecuter) Syncer {
+	s := new(APIProductTenantSynchroniser)
+	s.exe = exe
+	return s
+}
+
+func (s *APIProductTenantSynchroniser) Exec(request Request) error {
+	// Get directory list
+	baseSourceDir := filepath.Clean(request.ArtifactsDir)
+	entries, err := os.ReadDir(baseSourceDir)
+	if err != nil {
+		return errors.Wrap(err, 0)
+	}
+
+	product := api.NewAPIProduct(s.exe)
+
+	// Create temp directories in working dir
+	uploadWorkDir := fmt.Sprintf("%v/upload", request.WorkDir)
+	err = os.MkdirAll(uploadWorkDir, os.ModePerm)
+	if err != nil {
+		return errors.Wrap(err, 0)
+	}
+	downloadWorkDir := fmt.Sprintf("%v/download", request.WorkDir)
+	err = os.MkdirAll(downloadWorkDir, os.ModePerm)
+	if err != nil {
+		return errors.Wrap(err, 0)
+	}
+
+	artifactFileFound := false
+	for _, entry := range entries {
+		artifactFileName := entry.Name()
+		if !entry.IsDir() && strings.Contains(artifactFileName, ".json") {
+			artifactFileFound = true
+			gitArtifactPath := fmt.Sprintf("%v/%v", baseSourceDir, artifactFileName)
+
+			log.Info().Msg("---------------------------------------------------------------------------------")
+			log.Info().Msgf("Processing file %v", gitArtifactPath)
+
+			// Filter in/out artifacts
+			if str.FilterIDs(artifactFileName, request.IncludedIds, request.ExcludedIds) {
+				continue
+			}
+
+			// Strip .json from the file name
+			artifactId := strings.TrimSuffix(artifactFileName, ".json")
+
+			log.Info().Msgf("📢 Begin processing for APIProduct %v", artifactId)
+			productExists, err := product.Exists(artifactId)
+			if err != nil {
+				return err
+			}
+			if !productExists {
+				log.Info().Msgf("APIProduct %v will be created", artifactId)
+
+				err = product.Upload(gitArtifactPath, uploadWorkDir)
+				if err != nil {
+					return err
+				}
+
+				log.Info().Msg("🏆 APIProduct created successfully")
+			} else {
+				log.Warn().Msgf("APIProduct %v already exists. Skipping as update not currently supported", artifactId)
+			}
+		}
+	}
+	if !artifactFileFound {
+		log.Warn().Msgf("No directory with APIProduct contents found in %v", baseSourceDir)
+	}
+	log.Info().Msg("---------------------------------------------------------------------------------")
+	log.Info().Msgf("🏆 Completed processing of APIProducts")
 	return nil
 }
