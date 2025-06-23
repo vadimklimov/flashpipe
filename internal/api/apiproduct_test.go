@@ -60,7 +60,7 @@ func (suite *APIProductSuite) TearDownSuite() {
 
 	tearDownAPIProduct(suite.T(), "Northwind", suite.exe)
 	tearDownAPIProxy(suite.T(), "Northwind_V4", suite.exe)
-	err := os.RemoveAll("../../output/apim")
+	err := os.RemoveAll("../../output/apiproduct")
 	if err != nil {
 		suite.T().Logf("WARNING - Directory removal failed with error - %v", err)
 	}
@@ -70,7 +70,7 @@ func (suite *APIProductSuite) TearDownSuite() {
 func (suite *APIProductSuite) TestAPIProduct_1_Upload() {
 	a := NewAPIProduct(suite.exe)
 
-	err := a.Upload("../../test/testdata/apim/APIProducts/Northwind.json", "../../output/apim/work/upload")
+	err := a.Upload("../../test/testdata/apiproduct/Northwind.json", "../../output/apiproduct/work/upload")
 	if err != nil {
 		suite.T().Fatalf("Upload APIProduct failed with error - %v", err)
 	}
@@ -90,12 +90,12 @@ func (suite *APIProductSuite) TestAPIProduct_1_Upload() {
 func (suite *APIProductSuite) TestAPIProduct_2_Download() {
 	a := NewAPIProduct(suite.exe)
 
-	err := a.Download("Northwind", "../../output/apim/product/work/download")
+	err := a.Download("Northwind", "../../output/apiproduct/work/download")
 	if err != nil {
 		suite.T().Fatalf("Download APIProduct failed with error - %v", err)
 	}
 
-	assert.True(suite.T(), file.Exists("../../output/apim/product/work/download/Northwind.json"), "APIProduct was not downloaded")
+	assert.True(suite.T(), file.Exists("../../output/apiproduct/work/download/Northwind.json"), "APIProduct was not downloaded")
 }
 
 func setupAPIProxy(t *testing.T, id string, exe *httpclnt.HTTPExecuter) {
@@ -106,7 +106,7 @@ func setupAPIProxy(t *testing.T, id string, exe *httpclnt.HTTPExecuter) {
 		t.Logf("WARNING - Exists failed with error - %v", err)
 	}
 	if !proxyExists {
-		err := a.Upload(fmt.Sprintf("../../test/testdata/apim/%v", id), "../../output/apim/work/upload")
+		err := a.Upload(fmt.Sprintf("../../test/testdata/apiproxy/%v", id), "../../output/apiproduct/work/upload")
 		if err != nil {
 			t.Fatalf("Upload APIProxy failed with error - %v", err)
 		}
