@@ -404,13 +404,13 @@ func (s *APIProductTenantSynchroniser) Exec(request Request) error {
 			log.Info().Msg("---------------------------------------------------------------------------------")
 			log.Info().Msgf("Processing file %v", gitArtifactPath)
 
-			// Filter in/out artifacts
-			if str.FilterIDs(artifactFileName, request.IncludedIds, request.ExcludedIds) {
-				continue
-			}
-
 			// Strip .json from the file name
 			artifactId := strings.TrimSuffix(artifactFileName, ".json")
+
+			// Filter in/out artifacts
+			if str.FilterIDs(artifactId, request.IncludedIds, request.ExcludedIds) {
+				continue
+			}
 
 			log.Info().Msgf("📢 Begin processing for APIProduct %v", artifactId)
 			productExists, err := product.Exists(artifactId)

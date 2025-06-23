@@ -296,12 +296,14 @@ func TestAPIMCommands(t *testing.T) {
 		OauthClientId:     os.Getenv("FLASHPIPE_APIPORTAL_OAUTH_CLIENTID"),
 		OauthClientSecret: os.Getenv("FLASHPIPE_APIPORTAL_OAUTH_CLIENTSECRET"),
 	})
-	a := api.NewAPIProxy(exe)
+	proxy := api.NewAPIProxy(exe)
+	product := api.NewAPIProduct(exe)
 	println("---------- Setting up test - end ----------")
 
 	rootCmd := NewCmdRoot()
 	syncCmd := NewSyncCommand()
 	syncCmd.AddCommand(NewAPIProxyCommand())
+	syncCmd.AddCommand(NewAPIProductCommand())
 	rootCmd.AddCommand(syncCmd)
 
 	var args []string
@@ -311,7 +313,7 @@ func TestAPIMCommands(t *testing.T) {
 	args = append(args, "--oauth-clientid", os.Getenv("FLASHPIPE_APIPORTAL_OAUTH_CLIENTID"))
 	args = append(args, "--oauth-clientsecret", os.Getenv("FLASHPIPE_APIPORTAL_OAUTH_CLIENTSECRET"))
 	args = append(args, "--dir-git-repo", "../../")
-	args = append(args, "--dir-artifacts", "../../output/apiproxy/artifact")
+	args = append(args, "--dir-artifacts", "../../output/apiproxy/git/artifact")
 	args = append(args, "--dir-work", "../../output/apiproxy/git/work")
 	args = append(args, "--ids-include", "HelloWorldAPI")
 	args = append(args, "--git-skip-commit")
@@ -320,7 +322,7 @@ func TestAPIMCommands(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sync apiproxy git failed with error %v", err)
 	}
-	assert.True(t, file.Exists("../../output/apiproxy/artifact/HelloWorldAPI/manifest.json"), "manifest.json does not exist")
+	assert.True(t, file.Exists("../../output/apiproxy/git/artifact/HelloWorldAPI/manifest.json"), "manifest.json does not exist")
 
 	// 2 - Sync API Proxy to tenant
 	args = nil
@@ -337,19 +339,67 @@ func TestAPIMCommands(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sync apiproxy tenant failed with error %v", err)
 	}
-	proxyExists, err := a.Exists("Northwind_V4")
+	proxyExists, err := proxy.Exists("Northwind_V4")
 	if err != nil {
 		t.Fatalf("Get APIProxy failed with error %v", err)
 	}
 	assert.True(t, proxyExists, "APIProxy was not uploaded")
 
+	// 3 - Sync API Product to tenant
+	args = nil
+	args = append(args, "sync", "apiproduct")
+	args = append(args, "--tmn-host", os.Getenv("FLASHPIPE_APIPORTAL_HOST"))
+	args = append(args, "--oauth-clientid", os.Getenv("FLASHPIPE_APIPORTAL_OAUTH_CLIENTID"))
+	args = append(args, "--oauth-clientsecret", os.Getenv("FLASHPIPE_APIPORTAL_OAUTH_CLIENTSECRET"))
+	args = append(args, "--dir-artifacts", "../../test/testdata/apiproduct")
+	args = append(args, "--dir-work", "../../output/apiproduct/tenant/work")
+	args = append(args, "--ids-include", "Northwind")
+	args = append(args, "--target", "tenant")
+
+	_, _, err = ExecuteCommandC(rootCmd, args...)
+	if err != nil {
+		t.Fatalf("sync apiproduct tenant failed with error %v", err)
+	}
+	productExists, err := product.Exists("Northwind")
+	if err != nil {
+		t.Fatalf("Get APIProduct failed with error %v", err)
+	}
+	assert.True(t, productExists, "APIProduct was not uploaded")
+
+	// 4 - Sync API Product to Git
+	args = nil
+	args = append(args, "sync", "apiproduct")
+	args = append(args, "--tmn-host", os.Getenv("FLASHPIPE_APIPORTAL_HOST"))
+	args = append(args, "--oauth-clientid", os.Getenv("FLASHPIPE_APIPORTAL_OAUTH_CLIENTID"))
+	args = append(args, "--oauth-clientsecret", os.Getenv("FLASHPIPE_APIPORTAL_OAUTH_CLIENTSECRET"))
+	args = append(args, "--dir-git-repo", "../../")
+	args = append(args, "--dir-artifacts", "../../output/apiproduct/git/artifact")
+	args = append(args, "--dir-work", "../../output/apiproduct/git/work")
+	args = append(args, "--ids-include", "Northwind")
+	args = append(args, "--git-skip-commit")
+	args = append(args, "--target", "git")
+
+	_, _, err = ExecuteCommandC(rootCmd, args...)
+	if err != nil {
+		t.Fatalf("sync apiproduct git failed with error %v", err)
+	}
+	assert.True(t, file.Exists("../../output/apiproduct/git/artifact/Northwind.json"), "Northwind.json does not exist")
+
 	// ------------ Clean up ------------
 	println("---------- Tearing down test - start ----------")
-	err = a.Delete("Northwind_V4")
+	err = product.Delete("Northwind")
+	if err != nil {
+		t.Logf("WARNING - Delete failed with error - %v", err)
+	}
+	err = proxy.Delete("Northwind_V4")
 	if err != nil {
 		t.Logf("WARNING - Delete failed with error - %v", err)
 	}
 	err = os.RemoveAll("../../output/apiproxy")
+	if err != nil {
+		t.Logf("WARNING - Directory removal failed with error - %v", err)
+	}
+	err = os.RemoveAll("../../output/apiproduct")
 	if err != nil {
 		t.Logf("WARNING - Directory removal failed with error - %v", err)
 	}
