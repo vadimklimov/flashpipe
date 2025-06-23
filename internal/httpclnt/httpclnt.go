@@ -3,11 +3,12 @@ package httpclnt
 import (
 	"context"
 	"fmt"
-	"github.com/rs/zerolog/log"
-	"golang.org/x/oauth2/clientcredentials"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/rs/zerolog/log"
+	"golang.org/x/oauth2/clientcredentials"
 )
 
 type HTTPExecuter struct {
@@ -111,7 +112,7 @@ func (e *HTTPExecuter) LogError(resp *http.Response, callType string) (resBody [
 	}
 
 	if len(resBody) != 0 && e.showLogs {
-		log.Error().Msgf("Response body = %s", resBody)
+		log.Warn().Msgf("Response body = %s", resBody)
 	}
 
 	return resBody, fmt.Errorf("%v call failed with response code = %d", callType, resp.StatusCode)
