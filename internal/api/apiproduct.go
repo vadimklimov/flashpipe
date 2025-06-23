@@ -227,21 +227,30 @@ func (a *APIProduct) Upload(sourceFile string, workDir string) error {
 			// Retrieve the ID and update the value of resource.Id
 			// Store the results in a cache to avoid multiple calls for the same API name
 			var resourceDetails []*APIResourceMetadata
-			resourceDetails, found := resourcesCache[resource.ApiProxyEndPoint.ApiName]
-			if !found {
+			resourceDetails, foundInCache := resourcesCache[resource.ApiProxyEndPoint.ApiName]
+			if !foundInCache {
 				resourceDetails, err = r.GetByName(resource.ApiProxyEndPoint.ApiName)
 				if err != nil {
 					return err
 				}
-				resourcesCache[resource.ApiProxyEndPoint.ApiName] = resourceDetails // Cache the result
+				// Store only if resourceDetails is not empty
+				if len(resourceDetails) != 0 {
+					resourcesCache[resource.ApiProxyEndPoint.ApiName] = resourceDetails // Cache the result
+				}
 			}
+			foundReplacementId := false
 			// Loop through the resourceDetails and find the one with the matching name and apiName
 			for _, detail := range resourceDetails {
 				if detail.Name == resource.Name && detail.APIName == resource.ApiProxyEndPoint.ApiName {
 					log.Info().Msgf("Replacing Id %s with %s", resource.Id, detail.Id)
 					createData.ApiResources[i].Id = detail.Id // Update the Id in createData
+					foundReplacementId = true
 					break
 				}
+			}
+			if !foundReplacementId {
+				log.Error().Msgf("No matching APIResource found for API %s with name %s", resource.ApiProxyEndPoint.ApiName, resource.Name)
+				return fmt.Errorf("no matching APIResource found")
 			}
 		}
 	}
