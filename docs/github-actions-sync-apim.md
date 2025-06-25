@@ -39,12 +39,13 @@ Skip the templates and choose `set up a workflow yourself`.
 
 Provide a suitable name for the workflow file e.g. `sync-apim-to-git.yml` and replace the default content with the code sample below. Replace the tenant and authentication details accordingly - note that the host refers to the management node of the API Portal which differs from the tenant management node of Cloud Integration.
 
-**NOTE** - FlashPipe comes with companion GitHub Action [engswee/flashpipe-action](https://github.com/engswee/flashpipe-action) that simplifies usage in a workflow. The following action is used in the workflow:
-- [engswee/flashpipe-action/sync/apim@v1](https://github.com/engswee/flashpipe-action#sync-apim)
+**NOTE** - FlashPipe comes with companion GitHub Action [engswee/flashpipe-action](https://github.com/engswee/flashpipe-action) that simplifies usage in a workflow. The following actions are used in the workflow:
+- [engswee/flashpipe-action/sync/apiproxy@v1](https://github.com/engswee/flashpipe-action#sync-apiproxy)
+- [engswee/flashpipe-action/sync/apiproduct@v1](https://github.com/engswee/flashpipe-action#sync-apiproduct)
 
 ![Sync Workflow](images/setup/git-sync-apim/04b_sync_apim_git_workflow.png)
 
-<script src="https://gist.github.com/engswee/044767991065f41991b2c6a9fd8262c0.js"></script>
+<script src="https://gist.github.com/engswee/1a06264333060f8eb5c02690cb55957e.js"></script>
 
 Save and commit the new workflow file.
 
@@ -59,7 +60,8 @@ In the GitHub repository, go to `Actions`, select the workflow and click `Run wo
 ### 6. View execution results
 
 During or upon completion of the workflow run, the logs can be viewed by clicking on the workflow run.
-![Workflow Logs](images/setup/git-sync-apim/06a_logs_apim.png)
+![Workflow Logs APIProxy](images/setup/git-sync-apim/06a_logs_apim.png)
+![Workflow Logs APIProduct](images/setup/git-sync-apim/06a_logs_apiproduct.png)
 
 The APIM artifact files have now been downloaded from the tenant and committed to the repository.
 ![IFlow Files](images/setup/git-sync-apim/06b_apim_files.png)
@@ -76,7 +78,7 @@ Provide a suitable name for the workflow file e.g. `sync-apim-to-tenant.yml` and
 
 ![Sync Workflow](images/setup/git-sync-apim/b_01_sync_apim_to_tenant_workflow.png)
 
-<script src="https://gist.github.com/engswee/72d0a121f6c8c924cf771fb4d1d65573.js"></script>
+<script src="https://gist.github.com/engswee/4271fbcef81db0ec719bc8cc46bc1d69.js"></script>
 
 Save and commit the new workflow file.
 
@@ -89,6 +91,9 @@ In the GitHub repository, go to `Actions`, select the workflow and click `Run wo
 ### 3. View execution results
 
 During or upon completion of the workflow run, the logs can be viewed by clicking on the workflow run.
-![Workflow Logs](images/setup/git-sync-apim/b_03_sync_tenant_logs.png)
+![Workflow Logs APIProxy](images/setup/git-sync-apim/b_03_sync_tenant_logs.png)
+![Workflow Logs APIProduct](images/setup/git-sync-apim/b_03_sync_tenant_logs_apiproduct.png)
 
-As seen from the logs, changes in the APIM artifact were synced to the tenant. 
+As seen from the logs, APIM artifacts were synced to the tenant.
+
+_NOTE:_ Due to limitation of SAP's public API, updates of API Products are not synced to tenant, instead these will be skipped.

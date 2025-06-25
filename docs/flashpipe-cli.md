@@ -5,9 +5,10 @@ _FlashPipe_ provides a fully functional CLI with the following commands to inter
 - **[update package](#2-update-package)**
 - **[deploy](#3-deploy)**
 - **[sync](#4-sync)**
-- **[sync apim](#5-sync-apim)**
-- **[snapshot](#6-snapshot)**
-- **[snapshot restore](#7-snapshot-restore)**
+- **[sync apiproxy](#5-sync-apiproxy)**
+- **[sync apiproduct](#6-sync-apiproduct)**
+- **[snapshot](#7-snapshot)**
+- **[snapshot restore](#8-snapshot-restore)**
 
 
 These commands perform the _magic_ that significantly simplifies the steps required to execute the build and deploy steps in a CI/CD pipeline.
@@ -326,19 +327,19 @@ Environment variables set before call:
     FLASHPIPE_SYNC_PACKAGE_DETAILS: true
 ```
 
-### 5. sync apim
-This command is used to sync API Management artifacts between a tenant and a Git repository. It will compare any differences (new, deleted, changed) in files between tenant and the Git repository before synchronising them.
+### 5. sync apiproxy
+This command is used to sync API Proxies from API Management between a tenant and a Git repository. It will compare any differences (new, deleted, changed) in files between tenant and the Git repository before synchronising them.
 - dependent artifacts of the API Proxy are included like API Provider, Key Value Maps
 
 #### Usage
 ```bash
-flashpipe sync apim -h
+flashpipe sync apiproxy -h
 
-Synchronise API Management artifacts between SAP Integration Suite
+Synchronise API Management proxies (with dependent artifacts) between SAP Integration Suite
 tenant and a Git repository.
 
 Usage:
-  flashpipe sync apim [flags]
+  flashpipe sync apiproxy [flags]
 
 Flags:
       --dir-artifacts string           Directory containing contents of artifacts
@@ -348,7 +349,7 @@ Flags:
       --git-commit-msg string          Message used in commit (default "Sync repo from tenant")
       --git-commit-user string         User used in commit (default "github-actions[bot]")
       --git-skip-commit                Skip committing changes to Git repository
-  -h, --help                           help for apim
+  -h, --help                           help for apiproxy
       --ids-exclude strings            List of excluded artifact IDs
       --ids-include strings            List of included artifact IDs
       --target                         Target of sync. Allowed values: git, tenant (default "git")
@@ -364,7 +365,7 @@ Global Flags:
 ```
 
 #### CLI flags and environment variables list
-The following is the list of flags for the `sync apim` command and their corresponding environment variable name. The fourth column indicates whether the flag is valid for the specific value of --target.
+The following is the list of flags for the `sync apiproxy` command and their corresponding environment variable name. The fourth column indicates whether the flag is valid for the specific value of --target.
 
 | CLI flag name    | Environment variable name  | Mandatory | Applicable for value of --target | Shell expansion supported |
 |------------------|----------------------------|-----------|----------------------------------|---------------------------|
@@ -381,12 +382,12 @@ The following is the list of flags for the `sync apim` command and their corresp
 
 #### Example (OAuth with CLI flags)
 ```bash
-flashpipe sync apim --tmn-host ***.hana.ondemand.com --oauth-host ***.authentication.<region>.hana.ondemand.com --oauth-clientid <clientid> --oauth-clientsecret <clientsecret> --dir-git-repo "FlashPipe APIM Demo"
+flashpipe sync apiproxy --tmn-host ***.hana.ondemand.com --oauth-host ***.authentication.<region>.hana.ondemand.com --oauth-clientid <clientid> --oauth-clientsecret <clientsecret> --dir-git-repo "FlashPipe APIM Demo"
 ```
 
 #### Example (OAuth with environment variables)
 ```bash
-flashpipe sync apim
+flashpipe sync apiproxy
 
 Environment variables set before call:
     FLASHPIPE_TMN_HOST: ***.hana.ondemand.com
@@ -394,10 +395,82 @@ Environment variables set before call:
     FLASHPIPE_OAUTH_CLIENTID: <clientid>
     FLASHPIPE_OAUTH_CLIENTSECRET: <clientsecret>
     FLASHPIPE_DIR_GIT_REPO: "FlashPipe APIM Demo"
-    FLASHPIPE_DIR_ARTIFACTS: "FlashPipe APIM Demo/Contents"
+    FLASHPIPE_DIR_ARTIFACTS: "FlashPipe APIM Demo/APIProxies"
 ```
 
-### 6. snapshot
+### 6. sync apiproduct
+This command is used to sync API Products from API Management between a tenant and a Git repository. It will compare any differences (new, deleted, changed) between tenant and the Git repository before synchronising them.
+
+_NOTE:_ Due to limitation of SAP's public API, updates are not synced to tenant.
+
+#### Usage
+```bash
+flashpipe sync apiproduct -h
+
+Synchronise API Management products between SAP Integration Suite
+tenant and a Git repository.
+
+Usage:
+  flashpipe sync apiproduct [flags]
+
+Flags:
+      --dir-artifacts string           Directory containing contents of artifacts
+      --dir-git-repo string            Directory of Git repository
+      --dir-work string                Working directory for in-transit files (default "/tmp")
+      --git-commit-email string        Email used in commit (default "41898282+github-actions[bot]@users.noreply.github.com")
+      --git-commit-msg string          Message used in commit (default "Sync repo from tenant")
+      --git-commit-user string         User used in commit (default "github-actions[bot]")
+      --git-skip-commit                Skip committing changes to Git repository
+  -h, --help                           help for apiproduct
+      --ids-exclude strings            List of excluded artifact IDs
+      --ids-include strings            List of included artifact IDs
+      --target                         Target of sync. Allowed values: git, tenant (default "git")
+
+Global Flags:
+      --config string               config file (default is $HOME/flashpipe.yaml)
+      --debug                       Show debug logs
+      --oauth-clientid string       Client ID for using OAuth
+      --oauth-clientsecret string   Client Secret for using OAuth
+      --oauth-host string           Host for OAuth token server excluding https:// 
+      --oauth-path string           Path for OAuth token server (default "/oauth/token")
+      --tmn-host string             Host for API Portal for API Management excluding https://
+```
+
+#### CLI flags and environment variables list
+The following is the list of flags for the `sync apiproduct` command and their corresponding environment variable name. The fourth column indicates whether the flag is valid for the specific value of --target.
+
+| CLI flag name    | Environment variable name  | Mandatory | Applicable for value of --target | Shell expansion supported |
+|------------------|----------------------------|-----------|----------------------------------|---------------------------|
+| dir-git-repo     | FLASHPIPE_DIR_GIT_REPO     | Yes       | git, tenant                      | Yes                       |
+| dir-artifacts    | FLASHPIPE_DIR_ARTIFACTS    | No        | git, tenant                      | Yes                       |
+| target           | FLASHPIPE_TARGET           | No        | git, tenant                      | No                        |
+| ids-include      | FLASHPIPE_IDS_INCLUDE      | No        | git, tenant                      | No                        |
+| ids-exclude      | FLASHPIPE_IDS_EXCLUDE      | No        | git, tenant                      | No                        |
+| git-commit-msg   | FLASHPIPE_GIT_COMMIT_MSG   | No        | git                              | No                        |
+| git-commit-user  | FLASHPIPE_GIT_COMMIT_USER  | No        | git                              | No                        |
+| git-commit-email | FLASHPIPE_GIT_COMMIT_EMAIL | No        | git                              | No                        |
+| git-skip-commit  | FLASHPIPE_GIT_SKIP_COMMIT  | No        | git                              | No                        |
+| dir-work         | FLASHPIPE_DIR_WORK         | No        | git, tenant                      | Yes                       |
+
+#### Example (OAuth with CLI flags)
+```bash
+flashpipe sync apiproduct --tmn-host ***.hana.ondemand.com --oauth-host ***.authentication.<region>.hana.ondemand.com --oauth-clientid <clientid> --oauth-clientsecret <clientsecret> --dir-git-repo "FlashPipe APIM Demo"
+```
+
+#### Example (OAuth with environment variables)
+```bash
+flashpipe sync apiproduct
+
+Environment variables set before call:
+    FLASHPIPE_TMN_HOST: ***.hana.ondemand.com
+    FLASHPIPE_OAUTH_HOST: ***.authentication.<region>.hana.ondemand.com
+    FLASHPIPE_OAUTH_CLIENTID: <clientid>
+    FLASHPIPE_OAUTH_CLIENTSECRET: <clientsecret>
+    FLASHPIPE_DIR_GIT_REPO: "FlashPipe APIM Demo"
+    FLASHPIPE_DIR_ARTIFACTS: "FlashPipe APIM Demo/APIProducts"
+```
+
+### 7. snapshot
 This command is used to capture a snapshot of the Cloud Integration tenant's artifacts and integration package details (optional) to a Git repository. It will compare any differences (new, deleted, changed) in files from tenant and commit/push to the Git repository.
 
 
@@ -471,7 +544,7 @@ Environment variables set before call:
     FLASHPIPE_DIR_GIT_REPO: "TrialTenant"
 ```
 
-### 7. snapshot restore
+### 8. snapshot restore
 This command is used to restore a snapshot of the Cloud Integration artifacts and integration package details from a Git repository back to the tenant. It will compare any differences (new, deleted, changed) in files from Git repository and update to the tenant.
 
 

@@ -6,7 +6,7 @@
 
 - 🔥🔥 Hot new feature 🔥🔥 - _FlashPipe_ now supports syncing of API Products from **API Management** 
   - New `sync apiproduct` command
-- Rename of `sync apim` command to `sync apiproxy` for handling API Proxies.
+- Rename of `sync apim` command to `sync apiproxy` for handling API Proxies
   - `sync apim` still works for backward compatibility
 - Update to latest Go version 1.24.4 and dependencies
 
