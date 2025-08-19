@@ -1,5 +1,13 @@
 # Release Notes
 
+## 3.7.0 (Released 19 August 2025)
+
+---
+
+- Bug fix - update base Docker image to `bitnami/minideb:bookworm`
+  - includes new `DigiCert TLS RSA4096 Root G5` certificate required to connect to new/updated tenants using the new root CA
+- Update to latest Go version 1.25.0 and dependencies
+
 ## 3.6.0 (Released 25 June 2025)
 
 ---
