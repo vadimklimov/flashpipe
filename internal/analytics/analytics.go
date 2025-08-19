@@ -160,7 +160,7 @@ func constructQueryParameters(cmd *cobra.Command, cmdErr error, analyticsSiteId 
 		syncPackageLevelDetails := config.GetBool(cmd, "sync-package-details")
 		params.Set("dimension17", fmt.Sprintf("%v", syncPackageLevelDetails))
 
-	case "apiproxy":
+	case "apiproxy", "apiproduct":
 		// 12 - Sync Direction
 		target := config.GetString(cmd, "target")
 		params.Set("dimension12", target)
