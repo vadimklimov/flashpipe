@@ -1,4 +1,4 @@
-FROM bitnami/minideb:bullseye
+FROM bitnami/minideb:bookworm
 # ----------------------------------------
 # Docker base image reference:
 # https://hub.docker.com/r/bitnami/minideb
